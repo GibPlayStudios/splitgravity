@@ -1,0 +1,15 @@
+# app-ads.txt for Split Gravity
+#
+# Host this at the ROOT of the domain you list as the marketing URL on your
+# App Store listing, i.e. https://YOURDOMAIN/app-ads.txt
+#
+# It tells ad exchanges which sellers are authorised to sell your inventory.
+# Without it, anyone spoofing your bundle ID can sell fake impressions against
+# your app's name, and buyers have no way to tell the difference. AdMob crawls
+# it within about 24 hours of the marketing URL going live.
+#
+# The publisher ID below is taken from your AdMob App ID
+# (ca-app-pub-9495812431681784~1507224563). The final field is Google's
+# certification authority ID and is the same for everyone.
+
+google.com, pub-9495812431681784, DIRECT, f08c47fec0942fa0
