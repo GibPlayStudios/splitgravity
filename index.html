@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Split Gravity — Two orbs. One lethal line.</title>
+<meta name="description" content="A one-thumb arcade game where the obstacles land on the beat. 448 notes, six voices, zero audio files — the soundtrack is synthesised sample by sample while you play.">
+<link rel="icon" href="assets/favicon-64.png">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<meta property="og:title" content="Split Gravity">
+<meta property="og:description" content="Two orbs. One lethal line. The obstacles land on the beat.">
+<meta property="og:image" content="https://splitgravity.com/assets/icon-512.jpg">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#05070d">
+<style>
+/* Palette lifted straight from Theme.swift — the same hex values as the game. */
+:root{
+  --void:#05070d; --chrome:#e8f7ff; --dim:#7d90a4; --faint:#48586a;
+  --cyan:#00f5d4; --magenta:#ff2a85; --amber:#ffb020; --violet:#8a5bff;
+  --grid:rgba(0,245,212,.055);
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--void);color:var(--chrome);font-family:var(--mono);
+  font-size:16px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+section{padding:104px 0;position:relative}
+h2{font-size:11px;letter-spacing:6px;text-transform:uppercase;color:var(--cyan);
+  margin-bottom:14px;font-weight:600}
+h3{font-size:clamp(20px,3vw,28px);letter-spacing:.5px;margin-bottom:16px;
+  font-weight:700;line-height:1.25}
+p{color:var(--dim);max-width:64ch}
+a{color:var(--magenta)}
+.rule{height:1px;background:linear-gradient(90deg,transparent,rgba(232,247,255,.13),transparent)}
+
+/* ── Hero ───────────────────────────────────────────────────────────────────
+   Two equal rows, and everything sits in the upper one. The beam is at exactly
+   50%, so centring the content in the full height put the title straight on the
+   line — the same mistake this page's own screenshot caught. */
+.hero{min-height:100svh;position:relative;overflow:hidden;
+  display:grid;grid-template-rows:1fr 1fr}
+.arena{position:absolute;inset:0;z-index:0}
+.lane{position:absolute;left:0;right:0;height:50%}
+.lane.top{top:0;background:linear-gradient(to bottom,rgba(0,245,212,.02),rgba(0,245,212,.11))}
+.lane.bot{bottom:0;background:linear-gradient(to top,rgba(255,42,133,.02),rgba(255,42,133,.11))}
+.grid{position:absolute;inset:0;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),
+                   linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:64px 64px;animation:scroll 3.2s linear infinite}
+@keyframes scroll{from{background-position:0 0}to{background-position:-64px 0}}
+.beam{position:absolute;left:0;right:0;top:50%;height:3px;transform:translateY(-50%);
+  background:linear-gradient(90deg,transparent,var(--chrome) 12%,var(--chrome) 88%,transparent);
+  box-shadow:0 0 22px 6px rgba(232,247,255,.5),0 0 64px 20px rgba(138,91,255,.28);
+  animation:breathe 2.6s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.82}50%{opacity:1}}
+.orb{position:absolute;left:14%;width:20px;height:20px;border-radius:50%;background:var(--chrome)}
+.orb::after{content:"";position:absolute;inset:-13px;border-radius:50%;
+  border:2px solid currentColor;opacity:.85}
+.orb.top{color:var(--cyan);box-shadow:0 0 26px 9px rgba(0,245,212,.65);
+  animation:driftTop 3.4s ease-in-out infinite}
+.orb.bot{color:var(--magenta);box-shadow:0 0 26px 9px rgba(255,42,133,.65);
+  animation:driftBot 3.4s ease-in-out infinite}
+@keyframes driftTop{0%,100%{top:11%}45%{top:37%}}
+@keyframes driftBot{0%,100%{bottom:11%}45%{bottom:37%}}
+.gate{position:absolute;left:100%;width:24px;border-radius:2px;
+  animation:sweep 3.2s linear infinite}
+.gate.t{top:0;background:linear-gradient(to bottom,var(--cyan),rgba(0,245,212,.2));
+  box-shadow:0 0 20px rgba(0,245,212,.45)}
+.gate.b{bottom:0;background:linear-gradient(to top,var(--magenta),rgba(255,42,133,.2));
+  box-shadow:0 0 20px rgba(255,42,133,.45)}
+@keyframes sweep{from{transform:translateX(0)}to{transform:translateX(-142vw)}}
+.vignette{position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 45%,transparent 30%,var(--void) 94%)}
+
+.hero-inner{grid-row:1;position:relative;z-index:2;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:0 24px}
+.icon{display:block;width:112px;height:112px;border-radius:26%;margin-bottom:26px;
+  box-shadow:0 18px 60px rgba(0,0,0,.85),0 0 0 1px rgba(232,247,255,.10)}
+.title{display:flex;align-items:center;justify-content:center;gap:.2em;
+  font-size:clamp(30px,7.4vw,74px);font-weight:800;letter-spacing:.13em;line-height:1}
+.bar{display:inline-block;width:5px;height:.84em;border-radius:1px;flex:none}
+.bar.l{background:var(--cyan);box-shadow:0 0 15px var(--cyan)}
+.bar.r{background:var(--magenta);box-shadow:0 0 15px var(--magenta)}
+.tag{margin-top:18px;font-size:11px;letter-spacing:5px;color:var(--dim);text-transform:uppercase}
+.cta{margin-top:38px;display:flex;gap:13px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-block;padding:13px 26px;font-size:11px;letter-spacing:3px;
+  text-decoration:none;font-weight:700;text-transform:uppercase;border-radius:2px}
+.btn.primary{background:var(--cyan);color:var(--void);box-shadow:0 0 30px rgba(0,245,212,.38)}
+.btn.primary[aria-disabled="true"]{opacity:.6;cursor:default}
+.btn.ghost{border:1px solid rgba(232,247,255,.22);color:var(--chrome)}
+
+/* ── Numbers strip ──────────────────────────────────────────────────────── */
+.stats{display:grid;gap:1px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  background:rgba(232,247,255,.08);border-top:1px solid rgba(232,247,255,.08);
+  border-bottom:1px solid rgba(232,247,255,.08)}
+.stat{background:var(--void);padding:34px 20px;text-align:center}
+.stat .v{font-size:clamp(26px,4vw,38px);font-weight:800;line-height:1}
+.stat .k{font-size:10px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-top:10px}
+.stat:nth-child(1) .v{color:var(--cyan)}
+.stat:nth-child(2) .v{color:var(--magenta)}
+.stat:nth-child(3) .v{color:var(--amber)}
+.stat:nth-child(4) .v{color:var(--violet)}
+
+/* ── Modes ──────────────────────────────────────────────────────────────── */
+.modes{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));margin-top:38px}
+.mode{border:1px solid rgba(232,247,255,.10);padding:28px;border-radius:3px;
+  background:rgba(255,255,255,.012)}
+.mode .strip{height:3px;margin-bottom:24px;border-radius:2px}
+.mode .name{font-size:15px;letter-spacing:4px;font-weight:700;margin-bottom:6px}
+.mode .sub{font-size:10px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-bottom:16px}
+.mode p{font-size:14px}
+.m1 .name{color:var(--cyan)} .m1 .strip{background:var(--cyan);box-shadow:0 0 16px var(--cyan)}
+.m2 .name{color:var(--amber)} .m2 .strip{background:var(--amber);box-shadow:0 0 16px var(--amber)}
+.m3 .name{color:var(--violet)} .m3 .strip{background:var(--violet);box-shadow:0 0 16px var(--violet)}
+
+/* ── Sequencer, for the soundtrack section ──────────────────────────────── */
+.seq{margin-top:34px;border:1px solid rgba(232,247,255,.10);border-radius:3px;
+  padding:22px;background:rgba(255,255,255,.012);overflow:hidden}
+.seqrow{display:flex;align-items:center;gap:12px;margin-bottom:9px}
+.seqname{font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;
+  width:74px;flex:none;text-align:right}
+.steps{display:grid;grid-template-columns:repeat(16,1fr);gap:3px;flex:1}
+.step{height:15px;border-radius:1px;background:rgba(232,247,255,.055)}
+.step.on{animation:pulse 2s steps(16) infinite}
+.r1 .step.on{background:var(--cyan);box-shadow:0 0 9px var(--cyan)}
+.r2 .step.on{background:var(--magenta);box-shadow:0 0 9px var(--magenta)}
+.r3 .step.on{background:var(--amber);box-shadow:0 0 9px var(--amber)}
+.r4 .step.on{background:var(--violet);box-shadow:0 0 9px var(--violet)}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+.seqfoot{margin-top:18px;font-size:11px;letter-spacing:1px;color:var(--faint)}
+
+/* ── Skins ──────────────────────────────────────────────────────────────── */
+.skins{display:grid;gap:13px;grid-template-columns:repeat(auto-fit,minmax(146px,1fr));margin-top:38px}
+.skin{border:1px solid rgba(232,247,255,.10);padding:22px;border-radius:3px;text-align:center}
+.pair{display:flex;justify-content:center;margin-bottom:14px}
+.dot{width:26px;height:26px;border-radius:50%}
+.dot:first-child{margin-right:-9px}
+.skin .n{font-size:11px;letter-spacing:3px;font-weight:700}
+.skin .g{font-size:10px;letter-spacing:2px;color:var(--dim);margin-top:5px}
+
+/* ── Split feature rows ─────────────────────────────────────────────────── */
+.feat{display:grid;gap:56px;grid-template-columns:repeat(auto-fit,minmax(304px,1fr));
+  align-items:center;margin-top:40px}
+.shot{width:100%;border-radius:4px;border:1px solid rgba(232,247,255,.10);display:block}
+.list{list-style:none;margin-top:26px}
+.list li{color:var(--dim);font-size:14px;padding-left:20px;position:relative;margin-bottom:11px}
+.list li::before{content:"";position:absolute;left:0;top:.62em;width:7px;height:7px;
+  background:var(--cyan);box-shadow:0 0 9px var(--cyan)}
+
+/* ── Build story ────────────────────────────────────────────────────────── */
+.story{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));margin-top:38px}
+.card{border:1px solid rgba(232,247,255,.10);border-left:2px solid var(--violet);
+  padding:24px;border-radius:3px;background:rgba(255,255,255,.012)}
+.card h4{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--chrome);
+  margin-bottom:10px;font-weight:700}
+.card p{font-size:13.5px;line-height:1.62}
+
+footer{border-top:1px solid rgba(232,247,255,.08);padding:54px 0 74px;text-align:center}
+footer .links{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;margin-bottom:22px}
+footer a{font-size:11px;letter-spacing:3px;text-transform:uppercase;
+  text-decoration:none;color:var(--dim)}
+footer a:hover{color:var(--cyan)}
+footer .fine{font-size:11px;letter-spacing:2px;color:var(--faint)}
+
+@media (prefers-reduced-motion:reduce){.grid,.beam,.orb,.gate,.step.on{animation:none}}
+@media (max-width:640px){section{padding:72px 0}.icon{width:88px;height:88px}
+  .seqname{width:56px}.step{height:12px}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="arena" aria-hidden="true">
+    <div class="lane top"></div><div class="lane bot"></div>
+    <div class="grid"></div>
+    <div class="gate t" style="height:34%;animation-delay:0s"></div>
+    <div class="gate b" style="height:22%;animation-delay:1.1s"></div>
+    <div class="gate t" style="height:18%;animation-delay:2.2s"></div>
+    <div class="beam"></div>
+    <div class="orb top"></div><div class="orb bot"></div>
+    <div class="vignette"></div>
+  </div>
+  <div class="hero-inner">
+    <img class="icon" src="assets/icon-512.jpg" alt="Split Gravity app icon" width="112" height="112">
+    <h1 class="title"><span class="bar l"></span>SPLIT GRAVITY<span class="bar r"></span></h1>
+    <div class="tag">Two orbs &middot; one lethal line</div>
+    <div class="cta">
+      <a class="btn primary" href="#" aria-disabled="true">Coming to the App Store</a>
+      <a class="btn ghost" href="#how">How it plays</a>
+    </div>
+  </div>
+</header>
+
+<div class="stats">
+  <div class="stat"><div class="v">448</div><div class="k">notes per loop</div></div>
+  <div class="stat"><div class="v">0</div><div class="k">audio files</div></div>
+  <div class="stat"><div class="v">6</div><div class="k">synth voices</div></div>
+  <div class="stat"><div class="v">3.6s</div><div class="k">median run, impossible</div></div>
+</div>
+
+<section id="how">
+  <div class="wrap">
+    <h2>The whole game</h2>
+    <h3>Hold to pull in. Release to push out.</h3>
+    <p>Both orbs are drawn toward the beam that kills them. Let go and they drift back to the
+    walls. Every gate is a decision about how close you are willing to get — and a run lasts
+    seconds, so the next attempt starts before you have finished being annoyed about the last one.</p>
+    <ul class="list">
+      <li>One thumb. No buttons, no menus, nothing to read mid-run.</li>
+      <li>Gates arrive locked to the sixteenth-note grid, not to a timer.</li>
+      <li>The arena scales, so a phone and a 13-inch iPad play at identical difficulty.</li>
+      <li>Landscape, offline, no account, nothing to sign up for.</li>
+    </ul>
+  </div>
+</section>
+
+<div class="wrap"><div class="rule"></div></div>
+
+<section>
+  <div class="wrap">
+    <h2>The soundtrack</h2>
+    <h3>There is no music file. There is a synthesiser.</h3>
+    <p>Every sample you hear is computed while you play — six voices rendered one frame at a
+    time, with no allocation and no audio assets in the bundle at all. A 28-bar score in E
+    minor, 448 sixteenth notes, not a single rest among them. The tempo climbs from 150 to
+    178 BPM as the field speeds up, and it never falls back.</p>
+
+    <div class="seq" aria-hidden="true">
+      <div class="seqrow r1"><div class="seqname">Lead</div><div class="steps" data-fill="1,0,1,1,0,1,1,0,1,1,0,1,0,1,1,0"></div></div>
+      <div class="seqrow r2"><div class="seqname">Arp</div><div class="steps" data-fill="1,0,0,1,0,0,1,0,1,0,0,1,0,0,1,0"></div></div>
+      <div class="seqrow r3"><div class="seqname">Bass</div><div class="steps" data-fill="1,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0"></div></div>
+      <div class="seqrow r4"><div class="seqname">Drums</div><div class="steps" data-fill="1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1"></div></div>
+      <div class="seqfoot">Sixteenth-note grid &middot; gates spawn on these divisions</div>
+    </div>
+
+    <ul class="list">
+      <li>Pulse lead with vibrato and pulse-width modulation.</li>
+      <li>Triangle bass quantised to sixteen levels, the way the NES did it.</li>
+      <li>A sine sub-bass folded through saturation, so it survives a phone speaker.</li>
+      <li>Fifteen-bit LFSR noise for the drums — the same topology as the hardware.</li>
+      <li>Each difficulty gets its own drum bank. Impossible runs a double-time backbeat.</li>
+    </ul>
+  </div>
+</section>
+
+<div class="wrap"><div class="rule"></div></div>
+
+<section>
+  <div class="wrap">
+    <h2>Three ways to lose</h2>
+    <h3>Pick your patience.</h3>
+    <div class="modes">
+      <div class="mode m1"><div class="strip"></div><div class="name">NORMAL</div>
+        <div class="sub">Slow start &middot; builds</div>
+        <p>Opens gently and accelerates for nearly two minutes. The mode where a run can
+        actually go somewhere.</p></div>
+      <div class="mode m2"><div class="strip"></div><div class="name">EXTREME</div>
+        <div class="sub">No warm-up &middot; full speed</div>
+        <p>Starts at a pace Normal takes a minute to reach. Most runs end in seconds.</p></div>
+      <div class="mode m3"><div class="strip"></div><div class="name">IMPOSSIBLE</div>
+        <div class="sub">Split control</div>
+        <p>The screen halves. Top drives the top orb, bottom drives the other. Two thumbs,
+        one beam.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Earn the palette</h2>
+    <h3>Every gate counts, even on a run that scores zero.</h3>
+    <p>Skins unlock from lifetime gates cleared, and each one retints the whole game — orbs,
+    lanes, obstacles, and the beam itself.</p>
+    <div class="skins">
+      <div class="skin"><div class="pair"><span class="dot" style="background:#00F5D4"></span><span class="dot" style="background:#FF2A85"></span></div><div class="n">NEON</div><div class="g">Start</div></div>
+      <div class="skin"><div class="pair"><span class="dot" style="background:#FFB020"></span><span class="dot" style="background:#FF4E2A"></span></div><div class="n">EMBER</div><div class="g">60 gates</div></div>
+      <div class="skin"><div class="pair"><span class="dot" style="background:#9BFF3C"></span><span class="dot" style="background:#C13CFF"></span></div><div class="n">TOXIC</div><div class="g">250 gates</div></div>
+      <div class="skin"><div class="pair"><span class="dot" style="background:#6FD8FF"></span><span class="dot" style="background:#7A5CFF"></span></div><div class="n">FROST</div><div class="g">750 gates</div></div>
+      <div class="skin"><div class="pair"><span class="dot" style="background:#E8F7FF"></span><span class="dot" style="background:#8FA6B8"></span></div><div class="n">CHROME</div><div class="g">2000 gates</div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="feat">
+      <div>
+        <h2>One more go</h2>
+        <h3>A continue you can earn. Once.</h3>
+        <p>Die and you can watch an ad to resume with the score intact. Once per run, and no
+        more — this is a score-attack game, and a continue that can be bought repeatedly turns
+        the leaderboard into a measure of patience rather than skill.</p>
+        <p style="margin-top:18px">A one-time purchase removes the ads entirely.</p>
+      </div>
+      <img class="shot" src="assets/gameover.jpg"
+           alt="The game-over screen offering a continue in exchange for watching an ad">
+    </div>
+  </div>
+</section>
+
+<div class="wrap"><div class="rule"></div></div>
+
+<section>
+  <div class="wrap">
+    <h2>How it was built</h2>
+    <h3>Measured, not guessed.</h3>
+    <p>Most of the decisions in this game came from checking something rather than trusting an
+    instinct. Several of them overturned the instinct.</p>
+    <div class="story">
+      <div class="card">
+        <h4>The soundtrack was tested against research</h4>
+        <p>The score was written to sit on the memorable side of an earworm study. The first
+        attempt was measured against the paper, landed on the wrong side of it, and was thrown
+        away rather than shipped.</p>
+      </div>
+      <div class="card">
+        <h4>A simulation got the game wrong</h4>
+        <p>A bot played thousands of runs and never once died on the centre line, which
+        suggested the mechanic was decorative. Real players died to it constantly. The bot had
+        been written not to — the prediction was an assumption wearing a result's clothes.</p>
+      </div>
+      <div class="card">
+        <h4>One line was ending runs early</h4>
+        <p>Three quarters of centre-line deaths scored exactly zero. The tap that began a run
+        was also counting as a pull, so players died a third of a second in, before a single
+        gate had appeared.</p>
+      </div>
+      <div class="card">
+        <h4>The colours passed a test and still failed</h4>
+        <p>Two difficulty accents cleared a colour-distance check and looked identical anyway.
+        The metric weighted brightness over hue, and hue is what an eye reads at speed. The
+        metric was replaced.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="privacy-policy.html">Privacy</a>
+      <a href="mailto:info@splitgravity.com">Support</a>
+      <a href="#how">How it plays</a>
+    </div>
+    <div class="fine">Split Gravity &middot; info@splitgravity.com</div>
+  </div>
+</footer>
+
+<script>
+// Fills the sequencer from a data attribute instead of 64 hand-written divs.
+document.querySelectorAll('.steps').forEach(function (row) {
+  row.dataset.fill.split(',').forEach(function (on, i) {
+    var d = document.createElement('div');
+    d.className = 'step' + (on === '1' ? ' on' : '');
+    d.style.animationDelay = (i * 0.125) + 's';
+    row.appendChild(d);
+  });
+});
+</script>
+</body>
+</html>
