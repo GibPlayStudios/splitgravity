@@ -73,9 +73,15 @@ a{color:var(--magenta)}
 .vignette{position:absolute;inset:0;
   background:radial-gradient(ellipse at 50% 45%,transparent 30%,var(--void) 94%)}
 
+/* The beam divides the page the way it divides the game: identity in the upper
+   lane, the thing to act on in the lower one. Row 1 is bottom-aligned and row 2
+   top-aligned, so both sit close to the line without touching it. */
 .hero-inner{grid-row:1;position:relative;z-index:2;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  text-align:center;padding:0 24px}
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  text-align:center;padding:0 24px 46px}
+.hero-cta{grid-row:2;position:relative;z-index:2;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  text-align:center;padding:46px 24px 0}
 .icon{display:block;width:112px;height:112px;border-radius:26%;margin-bottom:26px;
   box-shadow:0 18px 60px rgba(0,0,0,.85),0 0 0 1px rgba(232,247,255,.10)}
 .title{display:flex;align-items:center;justify-content:center;gap:.2em;
@@ -84,7 +90,7 @@ a{color:var(--magenta)}
 .bar.l{background:var(--cyan);box-shadow:0 0 15px var(--cyan)}
 .bar.r{background:var(--magenta);box-shadow:0 0 15px var(--magenta)}
 .tag{margin-top:18px;font-size:11px;letter-spacing:5px;color:var(--dim);text-transform:uppercase}
-.cta{margin-top:38px;display:flex;gap:13px;justify-content:center;flex-wrap:wrap}
+.cta{display:flex;gap:13px;justify-content:center;flex-wrap:wrap}
 .btn{display:inline-block;padding:13px 26px;font-size:11px;letter-spacing:3px;
   text-decoration:none;font-weight:700;text-transform:uppercase;border-radius:2px}
 .btn.primary{background:var(--cyan);color:var(--void);box-shadow:0 0 30px rgba(0,245,212,.38)}
@@ -166,7 +172,9 @@ footer .fine{font-size:11px;letter-spacing:2px;color:var(--faint)}
 
 @media (prefers-reduced-motion:reduce){.grid,.beam,.orb,.gate,.step.on{animation:none}}
 @media (max-width:640px){section{padding:72px 0}.icon{width:88px;height:88px}
-  .seqname{width:56px}.step{height:12px}}
+  .seqname{width:56px}.step{height:12px}
+  .hero-inner{padding-bottom:34px}.hero-cta{padding-top:34px}
+  .cta{width:100%;max-width:320px}.btn{flex:1;text-align:center}}
 </style>
 </head>
 <body>
@@ -186,6 +194,9 @@ footer .fine{font-size:11px;letter-spacing:2px;color:var(--faint)}
     <img class="icon" src="assets/icon-512.jpg" alt="Split Gravity app icon" width="112" height="112">
     <h1 class="title"><span class="bar l"></span>SPLIT GRAVITY<span class="bar r"></span></h1>
     <div class="tag">Two orbs &middot; one lethal line</div>
+  </div>
+
+  <div class="hero-cta">
     <div class="cta">
       <a class="btn primary" href="#" aria-disabled="true">Coming to the App Store</a>
       <a class="btn ghost" href="#how">How it plays</a>
